@@ -6,17 +6,25 @@ import json
 def read_xlsx(input_file="../data/operations.xlsx"):
     try:
         df = pd.read_excel(input_file, engine="openpyxl")
-        df.dropna(subset=["Номер карты"])
-        logging.info(f"Successfully read the file: {input_file}")
-        return df
+
+        # Убираем строки, где нет номера карты
+        df = df.dropna(subset=["Номер карты"])
+
+        # Преобразуем DataFrame в список словарей
+        data = df.to_dict(orient="records")
+
+        logging.info(f"Successfully read the file: {input_file}, {len(data)} rows loaded.")
+        return data
     except Exception as e:
         logging.error(f"Error reading xlsx file {input_file}: {e}")
-        return None
+        return []
 
+# print(read_xlsx("../data/operations.xlsx"))
 def read_json(file_path):
     with open(file_path, encoding='utf-8') as f:
         data = json.load(f)
     return data
+
 
 
 def filter_by_date(date_str, input_file="../data/operations.xlsx", output_file="../data/filtered_operations.json"):
