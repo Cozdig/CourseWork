@@ -1,16 +1,17 @@
+import logging
 import pandas as pd
 import json
 
 
-def transactions_excel(file):
-    """Читает Excel-файл и возвращает список транзакций."""
+def read_xlsx(input_file="../data/operations.xlsx"):
     try:
-        df = pd.read_excel(file, engine="openpyxl")
-        return df.to_dict(orient="records")
-    except FileNotFoundError:
-        return "Файл не найден"
+        df = pd.read_excel(input_file, engine="openpyxl")
+        df.dropna(subset=["Номер карты"])
+        logging.info(f"Successfully read the file: {input_file}")
+        return df
     except Exception as e:
-        return f"Ошибка: {e}"
+        logging.error(f"Error reading xlsx file {input_file}: {e}")
+        return None
 
 def read_json(file_path):
     with open(file_path, encoding='utf-8') as f:
