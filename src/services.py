@@ -4,16 +4,15 @@ import re
 
 import pandas as pd
 
-from src.utils import read_xlsx
-
 logging.basicConfig(
     filename="../logs/search.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     filemode="w",
     encoding="utf-8",
-    force=True
+    force=True,
 )
+
 
 def re_sort(df, search, output_file="../data/search_results.json"):
     """Читает DataFrame, ищет совпадения и записывает результат в JSON-файл."""
@@ -39,8 +38,8 @@ def re_sort(df, search, output_file="../data/search_results.json"):
         result = [
             operation
             for operation in list_transactions
-            if pattern.search(str(operation.get("Категория", ""))) or
-               pattern.search(str(operation.get("Описание", "")))
+            if pattern.search(str(operation.get("Категория", "")))
+            or pattern.search(str(operation.get("Описание", "")))
         ]
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -49,6 +48,7 @@ def re_sort(df, search, output_file="../data/search_results.json"):
     logging.info(f"Результат ({len(result)} совпадений) записан в {output_file}.")
 
     return output_file
+
 
 # df = read_xlsx("../data/operations.xlsx")
 # re_sort(df, "Супермаркеты")
