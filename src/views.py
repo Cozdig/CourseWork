@@ -45,6 +45,7 @@ def log_error(func):
 
 @log_error
 def sp_tracker():
+    """Функция отслеживает акции и возвращает цены акций."""
     base_url = "https://www.alphavantage.co/query"
     stock_prices = []
     for ticker in tickers:
@@ -72,6 +73,8 @@ def sp_tracker():
 
 @log_error
 def convert_currency(amount, from_currency, to_currency):
+    """Функция берет кол-во денег, валюту из которой переводят и валюту в которую переводят,
+    и возвращает деньги в заданной валюте в 3 аргументе."""
     url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/{from_currency}"
     response = requests.get(url)
     data = response.json()
@@ -85,6 +88,7 @@ def convert_currency(amount, from_currency, to_currency):
 
 @log_error
 def day_time():
+    """Эта функция считывает время суток и возвращает сообщение для пользователя"""
     hour = datetime.datetime.now().hour
     if 3 <= hour < 12:
         return "Доброе утро"
@@ -96,6 +100,7 @@ def day_time():
 
 @log_error
 def cards(operation_info):
+    """Функция считывает список словарей из таблицы, и возвращает кол-во потраченных денег на карте."""
     if not operation_info:
         logging.error("No operation info provided to cards function.")
         return {}
@@ -119,10 +124,12 @@ def cards(operation_info):
 
 @log_error
 def summ(operation_info):
+    """Функция берет все суммы операций из таблицы, округляет их и возвращает."""
     return round(float(operation_info.get("Сумма операции с округлением", 0)), 2)
 
 @log_error
 def cashback(operation_info):
+    """Функция считает кол-во кешбека, накопленного за операции, которые подаются на вход функции."""
     return [
         {"card_number": card, "sum": data["sum"], "cashback": round(data["sum"] * 0.01, 2)}
         for card, data in cards(operation_info).items()
@@ -130,6 +137,7 @@ def cashback(operation_info):
 
 @log_error
 def top_5_transactions(operation_info):
+    """Функция принимает на вход данные из таблицы и возвращает топ 5 самых больших транзакций."""
     return sorted(
         [{
             "date": op.get("Дата операции"),
@@ -142,10 +150,13 @@ def top_5_transactions(operation_info):
 
 @log_error
 def currency_course(operation_info):
+    """Функция считывает транзакции с иностранными валютами и возвращает их, уже переведенные в рубль."""
     return convert_currency(operation_info.get("Сумма операции"), operation_info.get("Валюта операции"), "RUB")
 
 @log_error
 def main_views(date):
+    """Основная функция, которая собирает все функции выше. Она принимает на вход дату в формате
+    dd.mm.yyyy hh:mm:ss и возвращает JSON файл с данными о транзакциях, а также курс валют и стоимость акций."""
     file_name = filter_by_date(date)
     if not file_name:
         logging.error("No valid file name found for the given date.")
@@ -172,5 +183,5 @@ def main_views(date):
         json.dump(output, report_file, indent=2, ensure_ascii=False)
     logging.info(f"Report saved successfully to {report_file_path}")
 
-date_string = "20.11.2021 11:11:11"
-main_views(date_string)
+# date_string = "20.11.2021 23:11:24"
+# main_views(date_string)

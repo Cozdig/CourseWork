@@ -5,8 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import pandas as pd
-from src.utils import read_json
-
+from src.utils import read_json, read_xlsx
 
 log_directory = "../logs"
 os.makedirs(log_directory, exist_ok=True)
@@ -52,56 +51,53 @@ def decorator_file(file_name):
     return wrapper
 
 
-@decorator_file("../data/report_decor.json")
-def spending_by_category(transactions: pd.DataFrame,
-                         category: str,
-                         date: Optional[str] = None) -> pd.DataFrame:
-    """
-    Функция принимает на вход датафрейм, категорию и дату. Возвращает JSON-файл с информацией о тратах в данной категории.
-    """
+@decorator_file("../report_decor.json")
+def spending_by_category(transactions, category, date=None) -> pd.DataFrame:
     try:
         logger.info(f"Запрос для категории: {category} с датой: {date}")
 
         if not date:
             stop_date = datetime.now()
         else:
-
-            stop_date = datetime.strptime(date, "%d.%m.%Y %H:%M:%S")
+            stop_date = datetime.strptime(date, "%d.%m.%Y")
             stop_date = stop_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        logger.info('Определение даты, начиная с которой будут взяты операции для подсчета трат по категориям')
 
         start_date = stop_date - pd.Timedelta(days=90)
 
-        required_columns = ['Дата платежа', 'Категория', 'Сумма операции']
+        logger.info('Проверка на наличие необходимых столбцов в датафрейм')
 
+        required_columns = ['Дата платежа', 'Категория', 'Сумма операции']
 
         if isinstance(transactions, list):
             transactions = pd.DataFrame(transactions)
 
-
         for column in required_columns:
             if column not in transactions.columns:
-                logger.warning(f"Отсутствует обязательный столбец в данных: {column}")
+                logger.error(f"Отсутствует необходимый столбец: {column}")
                 return pd.DataFrame()
 
+        logger.info('Преобразование дат операций в объект datatime')
 
         transactions["Дата платежа"] = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y", errors='coerce')
 
+        logger.info('Формирование списка операций для формирования отчета')
+
+        logger.debug(f"Фильтруемый датафрейм:\n{transactions}")
 
         filtered_transactions = transactions[
             (transactions["Дата платежа"] >= start_date) &
             (transactions["Дата платежа"] <= stop_date) &
             (transactions["Категория"] == category) &
             (transactions["Сумма операции"] < 0)
-            ]
+        ]
 
+        logger.debug(f"Отфильтрованные данные:\n{filtered_transactions}")
 
-        if filtered_transactions.empty:
-            logger.info(f"Нет данных для категории: {category} за выбранный период.")
-            return pd.DataFrame({"Категория": [category], "Сумма трат": [0.0]})
+        logger.info('Инициализация отчета')
 
-
-        total_spending = round(filtered_transactions["Сумма операции"].abs().sum(), 2)
-
+        total_spending = filtered_transactions["Сумма операции"].abs().sum()
 
         result = pd.DataFrame({
             "Категория": [category],
@@ -112,13 +108,12 @@ def spending_by_category(transactions: pd.DataFrame,
         return result
 
     except ValueError as ve:
-        logger.error(f"Ошибка ValueError: {str(ve)}")
-        return pd.DataFrame({"Категория": [category], "Сумма трат": [0.0]})
+        logger.error(f"Ошибка значения: {ve}")
+        return pd.DataFrame()
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке данных: {str(e)}")
-        return pd.DataFrame({"Категория": [category], "Сумма трат": [0.0]})
+        logger.error(f"Произошла ошибка: {e}")
+        return pd.DataFrame()
 
-
-# trans = read_json("../data/search_results.json")
-# spending_by_category(trans, "Супермаркеты", "13.12.2020 23:59:59")
+# trans = read_xlsx("../data/operations.xlsx")
+# spending_by_category(trans, "Супермаркеты", "30.11.2019")

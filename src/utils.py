@@ -4,6 +4,7 @@ import json
 
 
 def read_xlsx(input_file="../data/operations.xlsx"):
+    """Функция принимает на вход путь до xlsx файла и возвращает список словарей."""
     try:
         df = pd.read_excel(input_file, engine="openpyxl")
 
@@ -20,14 +21,22 @@ def read_xlsx(input_file="../data/operations.xlsx"):
         return []
 
 # print(read_xlsx("../data/operations.xlsx"))
+
 def read_json(file_path):
-    with open(file_path, encoding='utf-8') as f:
-        data = json.load(f)
-    return data
+    """Функция принимает на вход путь до JSON файла и возвращает список словарей."""
+    try:
+        with open(file_path, encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        return []
 
 
 
 def filter_by_date(date_str, input_file="../data/operations.xlsx", output_file="../data/filtered_operations.json"):
+    """Функция принимает на вход дату в формате dd.mm.yyyy hh:mm:ss, путь до принимаемого файла,
+    а также путь до выходящего файла, и возвращает отфильтрованный JSON файл. Фильтровка происходит от начала
+    месяца заданной даты, до заданной даты."""
     df = pd.read_excel(input_file, engine="openpyxl")
     df.dropna(subset=["Номер карты"])
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True, errors="coerce")
